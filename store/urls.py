@@ -15,17 +15,23 @@ Including another URLconf
 """
 from django.urls import path, include
 from rest_framework import routers
-from store.views import StoreItemsList, AddressBook, CartView, PlaceOrder, CartReduceItemOrDeleteItem, PreviousOrderView
+from store.views import (StoreItemsList, AddressBook, CartView, PlaceOrder, CartReduceItemOrDeleteItem, PreviousOrderView, 
+DeliveryAddressIdView, ConfirmOrder, RepeatOrder, RatingCreateView, RecipeView)
 
 router = routers.DefaultRouter()
+router.register('myaddress', AddressBook)
+router.register('recipes', RecipeView)
 
 
 urlpatterns = [
 	path('', include(router.urls)),
     path('itemlist/', StoreItemsList.as_view()),
-    path('myaddress/', AddressBook.as_view()),
     path('cart/', CartView.as_view()),
     path('order/', PlaceOrder),
     path('reduceordelete/', CartReduceItemOrDeleteItem),
     path('previousorders/', PreviousOrderView.as_view()),
+    path('deliveryaddress/', DeliveryAddressIdView.as_view()),
+    path('confirm/', ConfirmOrder),
+    path('repeatorder/', RepeatOrder),
+    path('createrating/', RatingCreateView),
 ] 

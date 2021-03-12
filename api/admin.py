@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import CustomUserModel, InactiveUserId, ResetPassUserId, StoreItem, Address, Cart, Order, PreviousOrder
+from .models import (CustomUserModel, InactiveUserId, ResetPassUserId, StoreItem, Address, Cart, Order, PreviousOrder, 
+	DeliveryAddressId, Rating, Recipe)
 
 
 admin.site.register(CustomUserModel)
@@ -10,3 +11,6 @@ admin.site.register(Address)
 admin.site.register(Cart)
 admin.site.register(Order)
 admin.site.register(PreviousOrder)
+admin.site.register(DeliveryAddressId)
+admin.site.register(Rating)
+admin.site.register(Recipe)

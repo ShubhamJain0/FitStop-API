@@ -56,22 +56,27 @@ class CreateUser(generics.CreateAPIView):
 def send_sms_code(request, format=None):
 
 	if request.method == "POST":
-		num = request.data['phone']
-		user = CustomUserModel.objects.get(phone=num)
-		#Time based otp
-		time_otp = pyotp.TOTP(user.key, interval=300)
-		time_otp = time_otp.now()
-		#Phone number must be international and start with a plus '+'   
-		user_phone_number = user.phone
-		client.messages.create(
-			body="Your verification code is "+time_otp,
-			from_=twilio_phone,
-			to=user_phone_number
-		)
+		try:
+			num = request.data['phone']
+			user = CustomUserModel.objects.get(phone=num)
+			#Time based otp
+			time_otp = pyotp.TOTP(user.key, interval=300)
+			time_otp = time_otp.now()
+			#Phone number must be international and start with a plus '+'  
+			user_phone_number = '+91' + user.phone
+			#use_phone_number = '{0:+}'.format(int(user_phone_number))
+			#print(use_phone_number)
+			client.messages.create(
+				body="Your verification code is "+time_otp,
+				from_=twilio_phone,
+				to=user_phone_number
+			)
 
-		InactiveUserId.objects.create(id_of_user=user.id, otp_code=time_otp)
+			InactiveUserId.objects.create(id_of_user=user.id, otp_code=time_otp)
 
-		return Response(status=200)
+			return Response(status=200)
+		except CustomUserModel.DoesNotExist:
+			return Response({'message': 'User with this number does not exist'}, status=401)
 
 
 

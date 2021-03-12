@@ -121,6 +121,27 @@ class StoreItem(models.Model):
 	price = models.IntegerField()
 	image = models.ImageField(null=True, upload_to='images/')
 
+	def __str__(self):
+
+		return self.name
+
+	def no_of_ratings(self):
+		ratings = Rating.objects.filter(item=self)
+		return len(ratings)
+
+
+	def avg_ratings(self):
+		ratings = Rating.objects.filter(item=self)
+		sum_of_stars = 0
+
+		for rating in ratings:
+			sum_of_stars += rating.stars
+
+		if len(ratings) > 0:
+			return sum_of_stars / len(ratings)
+		else:
+			return 0
+
 
 
 class Address(models.Model):
@@ -136,6 +157,19 @@ class Address(models.Model):
 
 
 	REQUIRED_FIELDS = ['address', 'city', 'locality', 'type_of_address']
+
+
+
+
+class DeliveryAddressId(models.Model):
+
+	address_id = models.IntegerField()
+	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+
+
+
+
 
 
 
@@ -188,3 +222,27 @@ class PreviousOrder(models.Model):
 		settings.AUTH_USER_MODEL,
 		on_delete=models.CASCADE,
 		)
+
+
+class Rating(models.Model):
+
+	stars = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+	review = models.CharField(max_length=255, blank=True)
+	item = models.ForeignKey(StoreItem, on_delete=models.CASCADE)
+	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+	class Meta:
+
+		unique_together = (('user', 'item'),)
+		index_together = (('user', 'item'),)
+
+
+
+class Recipe(models.Model):
+
+	name = models.CharField(max_length=50, blank=True)
+	ingredients = models.CharField(max_length=100)
+	description = models.CharField(max_length=5000, blank=True)
+	store_item = models.ForeignKey(StoreItem, on_delete=models.CASCADE)
+	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+	image = models.ImageField(upload_to='images/recipe/')
