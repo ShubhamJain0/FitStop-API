@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db.models import (Sum, Count)
 
-from api.models import StoreItem, Address, Cart, PreviousOrder, DeliveryAddressId, Rating, Recipe
+from api.models import StoreItem, Address, Cart, PreviousOrder, DeliveryAddressId, Rating, Recipe, HomeBanner
 
 User = get_user_model()
 
@@ -15,7 +15,7 @@ class StoreItemSerializer(serializers.ModelSerializer):
 	class Meta:
 
 		model = StoreItem
-		fields = ['name', 'description','price', 'image', 'no_of_ratings', 'avg_ratings']
+		fields = ['id', 'name', 'description','price', 'image', 'no_of_ratings', 'avg_ratings']
 
 
 class AddressBookSerializer(serializers.ModelSerializer):
@@ -23,15 +23,7 @@ class AddressBookSerializer(serializers.ModelSerializer):
 	class Meta:
 
 		model = Address
-		fields = ['address', 'locality', 'city', 'type_of_address']
-
-
-	def create(self, validated_data):
-
-		new = Address.objects.create(**validated_data, user=self.context['request'].user)
-		new.save()
-
-		return new
+		fields = ['id', 'address', 'locality', 'city', 'type_of_address']
 
 
 
@@ -60,14 +52,7 @@ class CartSerializer(serializers.ModelSerializer):
 	class Meta:
 
 		model = Cart
-		fields = ['ordereditem', 'price', 'item_count']
-
-	def create(self, validated_data):
-
-		new = Cart.objects.create(**validated_data, user=self.context['request'].user)
-		new.save()
-
-		return new
+		fields = ['id', 'ordereditem', 'price', 'item_count']
 
 
 	def get_item_count(self, ordereditem):
@@ -114,3 +99,11 @@ class RecipeSerializer(serializers.ModelSerializer):
 	def create(self, validated_data):
 
 		return Recipe.objects.create(**validated_data)
+
+
+
+class HomeBannerSerializer(serializers.ModelSerializer):
+	class Meta:
+
+		model = HomeBanner
+		fields = ['id', 'image']

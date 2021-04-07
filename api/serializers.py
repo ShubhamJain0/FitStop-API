@@ -36,6 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
 		time_otp = time_otp.now()
 		#Phone number must be international and start with a plus '+'   
 		user_phone_number = user.phone
+		user_phone_number = '+91' + user.phone
 		client.messages.create(
 			body="Your verification code is "+time_otp,
 			from_=twilio_phone,

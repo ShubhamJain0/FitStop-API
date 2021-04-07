@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils.timezone import now
 
+
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.models import BaseUserManager
@@ -15,8 +16,10 @@ import uuid
 
 FOOD_CATEGORY = (
 
-	('Category1', 'Category1'),
-	('Category2', 'Category2'),
+	('Fruits', 'Fruits'),
+	('Dried-Fruits', 'Dried-Fruits'),
+	('Exotics', 'Exotics'),
+	('Other', 'Other')
 
 	)
 
@@ -26,6 +29,16 @@ ADDRESS_TYPE = (
 	('Home', 'Home'),
 	('Work', 'Work'),
 	('Other', 'Other')
+
+	)
+
+
+USER_OPTION = (
+
+	('one', 'one'),
+	('two', 'two'),
+	('three', 'three'),
+	('four', 'four')
 
 	)
 
@@ -61,15 +74,13 @@ class CustomUserModelManager(BaseUserManager):
 
 
 
-
-
-
-
 class CustomUserModel(AbstractBaseUser, PermissionsMixin):
 
 	email = models.EmailField(unique=True, max_length=255, null=True)
 	name = models.CharField(null=True, max_length=255)
-	phone = models.CharField(unique=True, null=True, max_length=15)
+	phone = models.CharField(unique=True, max_length=10, validators=[RegexValidator(r'^\d{10}$')])
+	selected_option = models.CharField(max_length=50, choices=USER_OPTION, null=True)
+	image = models.ImageField(upload_to='images/user_profile/', null=True)
 	key = models.CharField(max_length=100, blank=True)
 	is_active = models.BooleanField(default=True)
 	is_staff = models.BooleanField(default=False)
@@ -117,9 +128,9 @@ class StoreItem(models.Model):
 
 	name = models.CharField(max_length=50)
 	description = models.CharField(max_length=50, null=True)
-	category = models.CharField(max_length=50, choices=FOOD_CATEGORY)
+	category = models.CharField(max_length=50, choices=FOOD_CATEGORY, null=True)
 	price = models.IntegerField()
-	image = models.ImageField(null=True, upload_to='images/')
+	image = models.ImageField(null=True, upload_to='images/store/')
 
 	def __str__(self):
 
@@ -149,7 +160,7 @@ class Address(models.Model):
 	address = models.CharField(max_length=50, null=True)
 	locality = models.CharField(max_length=20, null=True)
 	city = models.CharField(max_length=30, null=True)
-	type_of_address = models.CharField(max_length=20, choices=ADDRESS_TYPE)
+	type_of_address = models.CharField(max_length=20)
 	user = models.ForeignKey(
 			settings.AUTH_USER_MODEL,
 			on_delete=models.CASCADE
@@ -177,6 +188,8 @@ class Cart(models.Model):
 
 	ordereditem = models.CharField(max_length=200)
 	price = models.IntegerField()
+	ordereddate = models.DateField(default=now)
+	orderedtime = models.TimeField(default=now)
 	user = models.ForeignKey(
 		settings.AUTH_USER_MODEL,
 		on_delete=models.CASCADE,
@@ -190,10 +203,24 @@ class Cart(models.Model):
 
 
 
+class ItemsData(models.Model):
+
+	ordereditem = models.CharField(max_length=200)
+	price = models.IntegerField()
+	ordereddate = models.DateField(default=now)
+	orderedtime = models.TimeField(default=now)
+	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+	def __str__(self):
+		return self.ordereditem
+
+
+
+
 
 class Order(models.Model):
 
-	ordereditem = models.ManyToManyField(Cart)
+	ordereditem = models.ManyToManyField(ItemsData)
 	ordereddate = models.DateField(default=now)
 	orderedtime = models.TimeField(default=now)
 	ordered_address = models.CharField(null=True, max_length=15)
@@ -211,7 +238,7 @@ class Order(models.Model):
 
 class PreviousOrder(models.Model):
 
-	ordereditem = models.ManyToManyField(Cart)
+	ordereditem = models.ManyToManyField(ItemsData)
 	ordereddate = models.DateField(default=now)
 	orderedtime = models.TimeField(default=now)
 	ordered_address = models.CharField(null=True, max_length=15)
@@ -243,6 +270,10 @@ class Recipe(models.Model):
 	name = models.CharField(max_length=50, blank=True)
 	ingredients = models.CharField(max_length=100)
 	description = models.CharField(max_length=5000, blank=True)
-	store_item = models.ForeignKey(StoreItem, on_delete=models.CASCADE)
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-	image = models.ImageField(upload_to='images/recipe/')
+	image = models.ImageField(upload_to='images/recipe/', null=True)
+
+
+class HomeBanner(models.Model):
+
+	image = models.ImageField(upload_to='images/banner/')

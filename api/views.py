@@ -122,6 +122,7 @@ def reset_pass(request):
 				time_otp = time_otp.now()
 				#Phone number must be international and start with a plus '+'   
 				user_phone_number = user.phone
+				user_phone_number = '+91' + user.phone
 				client.messages.create(
 					body="Your verification code is "+time_otp,
 					from_=twilio_phone,
@@ -154,7 +155,8 @@ def reset_pass_verify(request, reset_sms, format=None):
 		user = CustomUserModel.objects.get(id__in=get_id)
 
 		if request.method == 'GET' and user.authenticate(code):
-
+			
+			ResetPassUserId.objects.filter(reset_user_id=user.id).delete()
 			return Response({'message': 'User Verified'}, status=200)
 
 		if request.method == "PATCH":
@@ -162,8 +164,6 @@ def reset_pass_verify(request, reset_sms, format=None):
 			password = request.data['password']
 			user.set_password(password)
 			user.save()
-
-			ResetPassUserId.objects.filter(reset_user_id=user.id).delete()
 
 			return Response(dict(detail='Password successfully updated'), status=200)
 
