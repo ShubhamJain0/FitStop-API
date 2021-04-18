@@ -14,9 +14,9 @@ import pyotp
 from twilio.rest import Client as TwilioClient
 from decouple import config
 
-from .serializers import UserSerializer, EditUserSerializer
+from .serializers import UserSerializer, EditUserSerializer, GetUserSerializer
 from .models import CustomUserModel, InactiveUserId, ResetPassUserId
-
+import api.signals
 
 # Create your views here.
 
@@ -43,6 +43,16 @@ class User(generics.RetrieveUpdateAPIView):
 	def get_object(self):
 
 		return self.request.user
+
+
+	def get_serializer_class(self):
+
+		if self.request.method == 'GET':
+			return GetUserSerializer
+		elif self.request.method == 'PUT':
+			return EditUserSerializer
+
+		return self.serializer_class
 
 
 
@@ -72,34 +82,32 @@ def send_sms_code(request, format=None):
 				to=user_phone_number
 			)
 
-			InactiveUserId.objects.create(id_of_user=user.id, otp_code=time_otp)
-
-			return Response(status=200)
+			return Response({'message': 'otp sent'}, status=200)
 		except CustomUserModel.DoesNotExist:
 			return Response({'message': 'User with this number does not exist'}, status=401)
 
 
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 def verify_phone(request, sms_code, format=None):
 
 	try:
 
 		code = int(sms_code)
-		get_id = InactiveUserId.objects.filter(otp_code=code).values_list('id_of_user', flat=True)
-		user = CustomUserModel.objects.get(id__in=get_id)
+		get_phone = request.data['phone']
+		user = CustomUserModel.objects.get(phone=get_phone)
 
 		if user.authenticate(code):
 			user.is_active = True
 			user.save()
-			InactiveUserId.objects.filter(id_of_user=user.id).delete()
 
 			return Response({'message': 'User Created'}, status=201)
 
-		user.is_active = False
-		user.save()
-		return Response(dict(detail='The provided code did not match or has expired'),status=200)
+		else:
+			user.is_active = False
+			user.save()
+			return Response(dict(detail='The provided code did not match or has expired'),status=404)
 
 	except:
 
@@ -113,7 +121,7 @@ def reset_pass(request):
 	if request.method == "POST":
 
 		try:
-			get_num = request.data['phone_number']
+			get_num = request.data['phone']
 			user = CustomUserModel.objects.get(phone=get_num)
 
 			if user.is_active:
@@ -129,9 +137,8 @@ def reset_pass(request):
 					to=user_phone_number
 				)
 
-				ResetPassUserId.objects.create(reset_user_id=user.id, reset_code=time_otp)
 
-				return Response(status=200)
+				return Response({'message': 'otp sent'}, status=200)
 
 			else:
 				return Response(dict(detail="Looks like you already have an account, but you haven't verified your phone number"), status=401)
@@ -145,30 +152,37 @@ def reset_pass(request):
 
 
 
-@api_view(['GET', 'PUT', 'PATCH'])
+@api_view(['POST'])
 def reset_pass_verify(request, reset_sms, format=None):
 
 	try:
 
 		code = int(reset_sms)
-		get_id = ResetPassUserId.objects.filter(reset_code=code).values_list('reset_user_id', flat=True)
-		user = CustomUserModel.objects.get(id__in=get_id)
+		get_num = request.data['phone']
+		user = CustomUserModel.objects.get(phone=get_num)
 
-		if request.method == 'GET' and user.authenticate(code):
+		if request.method == 'POST' and user.authenticate(code):
 			
-			ResetPassUserId.objects.filter(reset_user_id=user.id).delete()
 			return Response({'message': 'User Verified'}, status=200)
-
-		if request.method == "PATCH":
-
-			password = request.data['password']
-			user.set_password(password)
-			user.save()
-
-			return Response(dict(detail='Password successfully updated'), status=200)
 
 		return Response(dict(detail='The provided code did not match or has expired'),status=401)
 
 	except:
 
 		return Response(dict(detail='Please enter a valid OTP'), status=406)
+
+
+
+@api_view(['PATCH'])
+def resetPass(request):
+
+	if request.method == 'PATCH':
+		 phone = request.data['phone']
+		 password = request.data['password']
+
+		 user = CustomUserModel.objects.get(phone=phone)
+
+		 user.set_password(password)
+		 user.save()
+
+		 return Response(dict(detail='Password successfully updated'), status=200)

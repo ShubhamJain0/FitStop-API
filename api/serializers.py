@@ -43,12 +43,14 @@ class UserSerializer(serializers.ModelSerializer):
 			to=user_phone_number
 		)
 
-		InactiveUserId.objects.create(id_of_user=user.id, otp_code=time_otp)
-
 		return user
 
 
+class GetUserSerializer(serializers.ModelSerializer):
+	class Meta:
 
+		model = CustomUserModel
+		fields = ['id', 'phone', 'name', 'email', 'image']
 
 
 
@@ -56,7 +58,7 @@ class EditUserSerializer(serializers.ModelSerializer):
 	class Meta:
 
 		model = CustomUserModel
-		fields = ['email', 'name']
+		fields = ['email', 'name', 'phone', 'image', 'id']
 
 
 	def update(self, instance, validated_data):

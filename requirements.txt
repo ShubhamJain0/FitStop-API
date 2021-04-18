@@ -6,3 +6,4 @@ twilio == 6.52.0
 python-decouple == 3.4
 pillow == 8.1.0
 django-cors-headers == 3.7.0
+exponent_server_sdk == 2.0.0

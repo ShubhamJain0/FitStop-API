@@ -155,6 +155,13 @@ class StoreItem(models.Model):
 
 
 
+
+class DetailsImage(models.Model):
+	image = models.ImageField(null=True, upload_to='images/detailsimage/')
+	item = models.ForeignKey(StoreItem, on_delete=models.CASCADE)
+
+
+
 class Address(models.Model):
 
 	address = models.CharField(max_length=50, null=True)
@@ -277,3 +284,11 @@ class Recipe(models.Model):
 class HomeBanner(models.Model):
 
 	image = models.ImageField(upload_to='images/banner/')
+
+
+
+
+class PushNotificationsToken(models.Model):
+
+	token = models.CharField(null=True, max_length=200)
+	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)

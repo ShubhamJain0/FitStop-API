@@ -2,7 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db.models import (Sum, Count)
 
-from api.models import StoreItem, Address, Cart, PreviousOrder, DeliveryAddressId, Rating, Recipe, HomeBanner
+from api.models import (StoreItem, Address, Cart, PreviousOrder, DeliveryAddressId, Rating, Recipe, HomeBanner, 
+	ItemsData, DetailsImage, PushNotificationsToken)
 
 User = get_user_model()
 
@@ -18,12 +19,21 @@ class StoreItemSerializer(serializers.ModelSerializer):
 		fields = ['id', 'name', 'description','price', 'image', 'no_of_ratings', 'avg_ratings']
 
 
+
+class DetailsImageSerializer(serializers.ModelSerializer):
+	class Meta:
+
+		model = DetailsImage
+		fields = ['id', 'image', 'item']
+
+
 class AddressBookSerializer(serializers.ModelSerializer):
 
 	class Meta:
 
 		model = Address
 		fields = ['id', 'address', 'locality', 'city', 'type_of_address']
+
 
 
 
@@ -61,30 +71,32 @@ class CartSerializer(serializers.ModelSerializer):
 
 
 
+class ItemsDataSerializer(serializers.ModelSerializer):
+	class Meta:
+
+		model = ItemsData
+		fields = '__all__'
 
 
 
 
 class PreviousOrderSerializer(serializers.ModelSerializer):
-	count = serializers.SerializerMethodField(read_only=True)
 	ordereditem = serializers.StringRelatedField(many=True)
 	class Meta:
 
 		model = PreviousOrder
-		fields = ['ordereditem', 'ordereddate', 'price', 'count']
+		fields = ['id', 'ordereditem', 'ordereddate', 'price']
 
-
-	def get_count(self, obj):
-		return obj.ordereditem.all().count()
 
 
 
 class RatingSerializer(serializers.ModelSerializer):
 	user = serializers.StringRelatedField()
+	item = serializers.StringRelatedField(many=False)
 	class Meta:
 
 		model = Rating
-		fields = ['stars', 'review', 'user']
+		fields = ['id', 'item', 'stars', 'review', 'user']
 
 
 
@@ -107,3 +119,10 @@ class HomeBannerSerializer(serializers.ModelSerializer):
 
 		model = HomeBanner
 		fields = ['id', 'image']
+
+
+class PushNotificationsTokenSerializer(serializers.ModelSerializer):
+	class Meta: 
+
+		model = PushNotificationsToken
+		fields = '__all__'

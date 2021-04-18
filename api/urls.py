@@ -15,14 +15,15 @@ Including another URLconf
 """
 from django.urls import path, include
 from rest_framework import routers
-from api.views import first, User, send_sms_code, verify_phone, CreateUser, reset_pass, reset_pass_verify
-
+from api.views import first, User, send_sms_code, verify_phone, CreateUser, reset_pass, reset_pass_verify, resetPass
+from rest_framework.authtoken.views import obtain_auth_token
 
 router = routers.DefaultRouter()
 
 
 urlpatterns = [
 	path('', include(router.urls)),
+    path('auth/', obtain_auth_token),
 	path('first/', first),
 	path('me/', User.as_view()),
     path('createuser/', CreateUser.as_view()),
@@ -30,4 +31,5 @@ urlpatterns = [
     path('verify_phone/<int:sms_code>', verify_phone),
     path('reset/', reset_pass),
     path('reset_pass_verify/<int:reset_sms>', reset_pass_verify),
+    path('reset-pass/', resetPass),
 ] 

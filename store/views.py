@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from store.serializers import (StoreItemSerializer, AddressBookSerializer, CartSerializer, PreviousOrderSerializer, 
-	DeliveryAddressIdSerializer, RatingSerializer, RecipeSerializer, HomeBannerSerializer)
+	DeliveryAddressIdSerializer, RatingSerializer, RecipeSerializer, HomeBannerSerializer, DetailsImageSerializer, 
+	PushNotificationsTokenSerializer)
 from api.models import (StoreItem, Address, Cart, Order, PreviousOrder, DeliveryAddressId, Rating, Recipe, ItemsData, 
-	HomeBanner, CustomUserModel)
+	HomeBanner, CustomUserModel, DetailsImage, PushNotificationsToken)
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -13,13 +14,92 @@ from rest_framework import viewsets, status, generics, mixins
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, action, authentication_classes
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import NotFound
 
+from exponent_server_sdk import (
+    DeviceNotRegisteredError,
+    PushClient,
+    PushMessage,
+    PushServerError,
+) 
+from requests.exceptions import ConnectionError, HTTPError
 
 # Create your views here.
 
 User = get_user_model()
+
+
+
+
+def send_push_message(token, message, title, extra=None):
+    try:
+        response = PushClient().publish(
+            PushMessage(to=token,
+                        body=message,
+                        title=title,
+                        data=extra))
+    except PushServerError as exc:
+        # Encountered some likely formatting/validation error.
+        rollbar.report_exc_info(
+            extra_data={
+                'token': token,
+                'message': message,
+                'extra': extra,
+                'errors': exc.errors,
+                'response_data': exc.response_data,
+            })
+        raise
+    except (ConnectionError, HTTPError) as exc:
+        # Encountered some Connection or HTTP error - retry a few times in
+        # case it is transient.
+        rollbar.report_exc_info(
+            extra_data={'token': token, 'message': message, 'extra': extra})
+        raise self.retry(exc=exc)
+
+    try:
+        # We got a response back, but we don't know whether it's an error yet.
+        # This call raises errors so we can handle them with normal exception
+        # flows.
+        response.validate_response()
+    except DeviceNotRegisteredError:
+        # Mark the push token as inactive
+        PushNotificationsToken.objects.get(token=token).delete()
+    except PushTicketError as exc:
+        # Encountered some other per-notification error.
+        rollbar.report_exc_info(
+            extra_data={
+                'token': token,
+                'message': message,
+                'extra': extra,
+                'push_response': exc.push_response._asdict(),
+            })
+        raise self.retry(exc=exc)
+
+
+
+
+
+
+
+
+
+
+class StoreItems(viewsets.ModelViewSet):
+	queryset = StoreItem.objects.all()
+	serializer_class = StoreItemSerializer
+
+	@action(detail=True, methods=['GET'])
+	def get_details(self, request, pk=None):
+
+		get_item = StoreItem.objects.get(id=pk)
+		get_detailsimages = DetailsImage.objects.filter(item=pk)
+
+		serializer = StoreItemSerializer(get_item, many=False, context={'request': request})
+		serializer1 = DetailsImageSerializer(get_detailsimages, many=True, context={'request': request})
+
+		return Response({'details': serializer.data, 'images': serializer1.data}, status=200)
+
 
 class StoreItemsFruitsList(generics.ListAPIView):
 
@@ -58,6 +138,7 @@ class AddressBook(viewsets.ModelViewSet):
 		raise NotFound({"message": "You don't have any saved address."})
 
 
+
 	def create(self, request):
 
 		address = request.data['address']
@@ -66,10 +147,14 @@ class AddressBook(viewsets.ModelViewSet):
 		type_of_address = request.data['type_of_address']
 		new = Address.objects.create(address=address, locality=locality, city=city, type_of_address=type_of_address, user=request.user)
 		new.save()
+		DeliveryAddressId.objects.filter(user=request.user).delete()
 		qs = Address.objects.filter(user=request.user)
 		serializer = AddressBookSerializer(qs, many=True)
+		DeliveryAddressId.objects.create(user=request.user, address_id=new.id)
+		qs2 = Address.objects.filter(id=new.id, user=request.user)
+		get_delivery_address = AddressBookSerializer(qs2, many=True)
 
-		return Response({'data': serializer.data}, status=200)
+		return Response({'data': serializer.data, 'delivery_address': get_delivery_address.data}, status=200)
 
 
 	def delete(self, request):
@@ -83,6 +168,8 @@ class AddressBook(viewsets.ModelViewSet):
 				delivery_address_present = 404
 			except:
 				pass
+		else:
+			delivery_address_present = 404
 		qs = Address.objects.filter(user=request.user)
 		if qs:
 			serializer = AddressBookSerializer(qs, many=True)
@@ -179,17 +266,18 @@ def CartReduceItemOrDeleteItem(request):
 
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def PlaceOrder(request):
 
-	if request.method == 'GET':
+	if request.method == 'POST':
 
 		get_order = Cart.objects.filter(user=request.user)
 		total_price = Cart.objects.filter(user=request.user).aggregate(Sum('price'))
 		address = DeliveryAddressId.objects.filter(user=request.user).values('address_id')
 		get_address = Address.objects.get(user=request.user, id__in=address)
+		get_pushtoken = request.data['pushToken']
 
 		for i in get_order:
 			ItemsData.objects.create(ordereditem=i.ordereditem, price=i.price, ordereddate=i.ordereddate, orderedtime=i.orderedtime, 
@@ -207,6 +295,8 @@ def PlaceOrder(request):
 			ordered_locality=get_address.locality, ordered_city=get_address.city)
 		qs2.ordereditem.set(get_data)
 		Cart.objects.filter(user=request.user).delete()
+		
+		send_push_message(get_pushtoken, 'Order has been placed successfully!', 'Order Status')
 		return Response({'message': 'Placed Succesfully'}, status=201)
 
 
@@ -226,7 +316,10 @@ class PreviousOrderView(generics.ListAPIView):
 		queryset = self.queryset
 		qs = queryset.filter(user=self.request.user)
 
-		return qs
+		if qs:
+			return qs
+		else:
+			raise NotFound('Not Found')
 
 
 
@@ -260,12 +353,11 @@ def ConfirmOrder(request):
 def RepeatOrder(request):
 
 	items = request.data['ordereditem']
-	"""for i in items.split(","):
+	for i in items:
 		item = i
 		item_price = StoreItem.objects.filter(name=item).values('price')
-		Cart.objects.create(ordereditem=item, price=item_price, user=request.user)"""
-	print(items)
-	return Response(status=200)
+		Cart.objects.create(ordereditem=item, price=item_price, user=request.user)
+	return Response({'message': 'Added to cart'}, status=200)
 
 
 
@@ -295,7 +387,7 @@ def RatingCreateView(request):
 	if qs:
 		return Response({'rating': serializer.data}, status=200)
 	else:
-		return Response(status=404)
+		return Response({'rating': 'No ratings found!'}, status=404)
 
 
 
@@ -313,3 +405,36 @@ class HomeBannerView(generics.ListAPIView):
 
 	queryset = HomeBanner.objects.all()
 	serializer_class = HomeBannerSerializer
+
+
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+def CreatePushNotificationsToken(request):
+
+	if request.method == 'POST':
+
+		token = request.data['pushToken']
+
+		try:
+			user = request.user
+			"""Checks if current logged in user is associated with the current device token"""
+			if PushNotificationsToken.objects.filter(user=user, token=token):
+				return Response({'message': 'Token exists'}, status=203)
+			else:
+				"""If current user is not associated with the current device token it updates the current token with current user"""
+				if PushNotificationsToken.objects.filter(token=token):
+					PushNotificationsToken.objects.filter(token=token).update(user=user)
+					return Response({'message': 'Updated'}, status=202)
+				else:
+					PushNotificationsToken.objects.create(user=user, token=token)
+					return Response({'message': 'created'}, status=201)
+
+		except:
+			"""Returns if the device token exists"""
+			if PushNotificationsToken.objects.filter(token=token):
+				return Response({'message': 'Token exists'}, status=200)
+			else:
+				"""Creates a device token if it doesn't exists"""
+				PushNotificationsToken.objects.create(token=token)
+				return Response({'message': 'created'}, status=201)

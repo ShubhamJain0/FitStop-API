@@ -15,13 +15,14 @@ Including another URLconf
 """
 from django.urls import path, include
 from rest_framework import routers
-from store.views import (StoreItemsFruitsList, StoreItemsDriedFruitsList,StoreItemsExoticsList, AddressBook, CartView, PlaceOrder, 
+from store.views import (StoreItems, StoreItemsFruitsList, StoreItemsDriedFruitsList,StoreItemsExoticsList, AddressBook, CartView, PlaceOrder, 
     CartReduceItemOrDeleteItem, PreviousOrderView, DeliveryAddressIdView, ConfirmOrder, RepeatOrder, RatingCreateView, 
-    RecipeView, HomeBannerView, getDeliveryAddress)
+    RecipeView, HomeBannerView, getDeliveryAddress, CreatePushNotificationsToken)
 
 router = routers.DefaultRouter()
 router.register('myaddress', AddressBook)
 router.register('recipes', RecipeView)
+router.register('storelist', StoreItems)
 
 
 urlpatterns = [
@@ -39,4 +40,5 @@ urlpatterns = [
     path('repeatorder/', RepeatOrder),
     path('createrating/', RatingCreateView),
     path('homebanner/', HomeBannerView.as_view()),
+    path('pushnotificationtoken/', CreatePushNotificationsToken),
 ] 
