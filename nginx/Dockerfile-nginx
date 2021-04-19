@@ -2,4 +2,8 @@ FROM nginx:latest
 
 RUN rm /etc/nginx/conf.d/default.conf
 
+<<<<<<< HEAD
 COPY nginx/store-api.conf /etc/nginx/conf.d/
+=======
+COPY nginx/store-api.conf /etc/nginx/conf.d/
+>>>>>>> 34d055d0e64527581c8858b37cd57ef7b5f8e777
