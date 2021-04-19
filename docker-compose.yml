@@ -1,5 +1,7 @@
 version: '3.7'
 
+volumes:
+  postgres_data:
 
 
 services:
@@ -17,9 +19,11 @@ services:
 
   db:
     image: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=storeapi
-      - POSTGRES_USER=postgresuser 
-      - POSTGRES_PASSWORD=postgresuser123 
+      - POSTGRES_DB=${postgres_name}
+      - POSTGRES_USER=${postgres_user}
+      - POSTGRES_PASSWORD=${postgres_password}
       - TZ:'Asia/Kolkata'
       - PGTZ:'Asia/Kolkata'
