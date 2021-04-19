@@ -2,6 +2,7 @@ version: '3.7'
 
 volumes:
   postgres_data:
+  static_files:
 
 services:
   app:
@@ -12,6 +13,7 @@ services:
     volumes:
       - .:/code
       - ./mediafiles:/mediafiles
+      - static_files:/staticfiles
     ports:
       - "8000:8000"
     environment:
@@ -39,7 +41,8 @@ services:
       volumes:
         - .:/code
         - ./mediafiles:/mediafiles
+        - static_files:/staticfiles
       ports:
-        - "80:80"
+        - "8080:80"
       depends_on:
         - app
