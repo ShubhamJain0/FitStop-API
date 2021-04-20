@@ -149,3 +149,10 @@ TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default=None)
 
 
 AUTH_USER_MODEL = 'api.CustomUserModel'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+    )
+}
