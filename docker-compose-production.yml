@@ -3,6 +3,7 @@ version: '3.7'
 volumes:
   postgres_data:
   static_files:
+  letsencrypt:
 
 services:
   app:
@@ -14,6 +15,7 @@ services:
       - .:/code
       - ./mediafiles:/mediafiles
       - static_files:/staticfiles
+      - /etc/letsencrypt:/etc/nginx/certs
     ports:
       - "8000:8000"
     environment:
@@ -42,7 +44,11 @@ services:
         - .:/code
         - ./mediafiles:/mediafiles
         - static_files:/staticfiles
+        - ./nginx/certbot/logs/:/var/log/letsencrypt
+        - ./nginx/certbot/data:/usr/share/nginx/html/letsencrypt
+        - /etc/letsencrypt:/etc/nginx/certs
       ports:
         - "80:80"
+        - "443:443"
       depends_on:
         - app

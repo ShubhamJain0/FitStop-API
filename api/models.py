@@ -164,9 +164,9 @@ class DetailsImage(models.Model):
 
 class Address(models.Model):
 
-	address = models.CharField(max_length=50, null=True)
-	locality = models.CharField(max_length=20, null=True)
-	city = models.CharField(max_length=30, null=True)
+	address = models.CharField(max_length=255, null=True)
+	locality = models.CharField(max_length=255, null=True)
+	city = models.CharField(max_length=255, null=True)
 	type_of_address = models.CharField(max_length=20)
 	user = models.ForeignKey(
 			settings.AUTH_USER_MODEL,
@@ -230,7 +230,7 @@ class Order(models.Model):
 	ordereditem = models.ManyToManyField(ItemsData)
 	ordereddate = models.DateField(default=now)
 	orderedtime = models.TimeField(default=now)
-	ordered_address = models.CharField(null=True, max_length=15)
+	ordered_address = models.CharField(null=True, max_length=255)
 	ordered_locality = models.CharField(null=True,max_length=255)
 	ordered_city = models.CharField(max_length=255)
 	total_price = models.IntegerField(null=True)
@@ -248,7 +248,7 @@ class PreviousOrder(models.Model):
 	ordereditem = models.ManyToManyField(ItemsData)
 	ordereddate = models.DateField(default=now)
 	orderedtime = models.TimeField(default=now)
-	ordered_address = models.CharField(null=True, max_length=15)
+	ordered_address = models.CharField(null=True, max_length=255)
 	ordered_locality = models.CharField(null=True,max_length=255)
 	ordered_city = models.CharField(max_length=255)
 	price = models.IntegerField(null=True)
