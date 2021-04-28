@@ -17,7 +17,7 @@ from django.urls import path, include
 from rest_framework import routers
 from store.views import (StoreItems, StoreItemsFruitsList, StoreItemsDriedFruitsList,StoreItemsExoticsList, AddressBook, CartView, PlaceOrder, 
     CartReduceItemOrDeleteItem, PreviousOrderView, DeliveryAddressIdView, ConfirmOrder, RepeatOrder, RatingCreateView, 
-    RecipeView, HomeBannerView, getDeliveryAddress, CreatePushNotificationsToken)
+    RecipeView, HomeBannerView, getDeliveryAddress, CreatePushNotificationsToken, HomeProductsView, CouponView)
 
 router = routers.DefaultRouter()
 router.register('myaddress', AddressBook)
@@ -40,5 +40,7 @@ urlpatterns = [
     path('repeatorder/', RepeatOrder),
     path('createrating/', RatingCreateView),
     path('homebanner/', HomeBannerView.as_view()),
+    path('homeproducts/', HomeProductsView.as_view()),
     path('pushnotificationtoken/', CreatePushNotificationsToken),
+    path('coupons/', CouponView),
 ] 

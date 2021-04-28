@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import (Sum, Count)
 
 from api.models import (StoreItem, Address, Cart, PreviousOrder, DeliveryAddressId, Rating, Recipe, HomeBanner, 
-	ItemsData, DetailsImage, PushNotificationsToken)
+	ItemsData, DetailsImage, PushNotificationsToken, HomeProducts, Coupon)
 
 User = get_user_model()
 
@@ -16,7 +16,7 @@ class StoreItemSerializer(serializers.ModelSerializer):
 	class Meta:
 
 		model = StoreItem
-		fields = ['id', 'name', 'description','price', 'image', 'no_of_ratings', 'avg_ratings']
+		fields = ['id', 'name', 'description','price', 'image', 'no_of_ratings', 'avg_ratings', 'category', 'previous_price']
 
 
 
@@ -121,8 +121,22 @@ class HomeBannerSerializer(serializers.ModelSerializer):
 		fields = ['id', 'image']
 
 
+class HomeProductsSerializer(serializers.ModelSerializer):
+	class Meta:
+
+		model = HomeProducts
+		fields = '__all__'
+
+
 class PushNotificationsTokenSerializer(serializers.ModelSerializer):
 	class Meta: 
 
 		model = PushNotificationsToken
 		fields = '__all__'
+
+
+class CouponSerializer(serializers.ModelSerializer):
+	class Meta:
+
+		model = Coupon
+		fields = ['id', 'name', 'description', 'discount', 'min_items_price']

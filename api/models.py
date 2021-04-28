@@ -19,7 +19,13 @@ FOOD_CATEGORY = (
 	('Fruits', 'Fruits'),
 	('Dried-Fruits', 'Dried-Fruits'),
 	('Exotics', 'Exotics'),
-	('Other', 'Other')
+	('Other', 'Other'),
+	('Banner1', 'Banner1'),
+	('Banner2', 'Banner2'),
+	('Custom1', 'Custom1'),
+	('Custom2', 'Custom2'),
+	('Custom3', 'Custom3'),
+	('Custom4', 'Custom4'),
 
 	)
 
@@ -130,6 +136,7 @@ class StoreItem(models.Model):
 	description = models.CharField(max_length=50, null=True)
 	category = models.CharField(max_length=50, choices=FOOD_CATEGORY, null=True)
 	price = models.IntegerField()
+	previous_price = models.IntegerField(default=0)
 	image = models.ImageField(null=True, upload_to='images/store/')
 
 	def __str__(self):
@@ -288,7 +295,25 @@ class HomeBanner(models.Model):
 
 
 
+class HomeProducts(models.Model):
+
+	image = models.ImageField(upload_to='images/home-products/')
+	category = models.CharField(null=True, max_length=255, choices=(('Custom1', 'Custom1'), ('Custom2', 'Custom2'), ('Custom3', 'Custom3'), ('Custom4', 'Custom4')))
+
+
+
+
 class PushNotificationsToken(models.Model):
 
 	token = models.CharField(null=True, max_length=200)
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+
+
+
+class Coupon(models.Model):
+
+	name = models.CharField(max_length=255, null=True)
+	description = models.CharField(max_length=255, null=True)
+	discount = models.IntegerField(default=0)
+	min_items_price = models.IntegerField(default=0)
+	user = models.ManyToManyField(CustomUserModel)

@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from store.serializers import (StoreItemSerializer, AddressBookSerializer, CartSerializer, PreviousOrderSerializer, 
 	DeliveryAddressIdSerializer, RatingSerializer, RecipeSerializer, HomeBannerSerializer, DetailsImageSerializer, 
-	PushNotificationsTokenSerializer)
+	PushNotificationsTokenSerializer, HomeProductsSerializer, CouponSerializer)
 from api.models import (StoreItem, Address, Cart, Order, PreviousOrder, DeliveryAddressId, Rating, Recipe, ItemsData, 
-	HomeBanner, CustomUserModel, DetailsImage, PushNotificationsToken)
+	HomeBanner, CustomUserModel, DetailsImage, PushNotificationsToken, HomeProducts, Coupon)
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -230,7 +230,7 @@ class CartView(generics.ListCreateAPIView, generics.DestroyAPIView):
 	 	item = request.data['ordereditem']
 	 	price = StoreItem.objects.filter(name=item['name']).values('price')
 	 	"""item is returning a dictionary thats the reason for item['name']"""
-	 	Cart.objects.create(ordereditem=item['name'], price=price, user=request.user)
+	 	Cart.objects.create(ordereditem=item['name'], price=price[0]['price'], user=request.user)
 	 	qs = Cart.objects.filter(user=request.user).distinct('ordereditem')
 	 	serializer = CartSerializer(qs, many=True, context={'request': request})
 	 	return Response({'cart': serializer.data}, status=201)
@@ -274,9 +274,9 @@ def PlaceOrder(request):
 	if request.method == 'POST':
 
 		get_order = Cart.objects.filter(user=request.user)
-		total_price = Cart.objects.filter(user=request.user).aggregate(Sum('price'))
 		address = DeliveryAddressId.objects.filter(user=request.user).values('address_id')
 		get_address = Address.objects.get(user=request.user, id__in=address)
+		total_price = request.data['total_price']
 		get_pushtoken = request.data['pushToken']
 
 		for i in get_order:
@@ -288,10 +288,10 @@ def PlaceOrder(request):
 		get_time = Cart.objects.filter(user=request.user).values_list('orderedtime', flat=True)
 		get_data = ItemsData.objects.filter(ordereditem__in=get_item, ordereddate__in=get_date, orderedtime__in=get_time, 
 			user=request.user)
-		qs = Order.objects.create(user=request.user, total_price=total_price['price__sum'], ordered_address=get_address.address, 
+		qs = Order.objects.create(user=request.user, total_price=total_price, ordered_address=get_address.address, 
 			ordered_locality=get_address.locality, ordered_city=get_address.city)
 		qs.ordereditem.set(get_data)
-		qs2 = PreviousOrder.objects.create(user=request.user, price=total_price['price__sum'], ordered_address=get_address.address, 
+		qs2 = PreviousOrder.objects.create(user=request.user, price=total_price, ordered_address=get_address.address, 
 			ordered_locality=get_address.locality, ordered_city=get_address.city)
 		qs2.ordereditem.set(get_data)
 		Cart.objects.filter(user=request.user).delete()
@@ -405,6 +405,24 @@ class HomeBannerView(generics.ListAPIView):
 
 	queryset = HomeBanner.objects.all()
 	serializer_class = HomeBannerSerializer
+
+
+
+class HomeProductsView(generics.ListAPIView):
+
+	queryset = HomeProducts.objects.all()
+	serializer_class = HomeProductsSerializer
+
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def CouponView(request):
+
+	queryset = Coupon.objects.filter(user=request.user)
+	serializer = CouponSerializer(queryset, many=True)
+	return Response({'data': serializer.data}, status=200)
 
 
 

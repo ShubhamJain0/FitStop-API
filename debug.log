@@ -1,0 +1,104 @@
+Exception while resolving variable 'get_short_name' in template 'admin/index.html'.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/site-packages/django/template/base.py", line 828, in _resolve_lookup
+    current = current[bit]
+  File "/usr/local/lib/python3.7/site-packages/django/utils/functional.py", line 225, in inner
+    return func(self._wrapped, *args)
+TypeError: 'CustomUserModel' object is not subscriptable
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/site-packages/django/template/base.py", line 836, in _resolve_lookup
+    current = getattr(current, bit)
+  File "/usr/local/lib/python3.7/site-packages/django/utils/functional.py", line 225, in inner
+    return func(self._wrapped, *args)
+AttributeError: 'CustomUserModel' object has no attribute 'get_short_name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/site-packages/django/template/base.py", line 842, in _resolve_lookup
+    current = current[int(bit)]
+ValueError: invalid literal for int() with base 10: 'get_short_name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/site-packages/django/template/base.py", line 849, in _resolve_lookup
+    (bit, current))  # missing attribute
+django.template.base.VariableDoesNotExist: Failed lookup for key [get_short_name] in <SimpleLazyObject: <CustomUserModel: 9515871045>>
+Not Found: /static/admin/css/responsive.css
+Not Found: /static/admin/css/base.css
+Not Found: /static/admin/css/dashboard.css
+Exception while resolving variable 'get_short_name' in template 'admin/index.html'.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/site-packages/django/template/base.py", line 828, in _resolve_lookup
+    current = current[bit]
+  File "/usr/local/lib/python3.7/site-packages/django/utils/functional.py", line 225, in inner
+    return func(self._wrapped, *args)
+TypeError: 'CustomUserModel' object is not subscriptable
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/site-packages/django/template/base.py", line 836, in _resolve_lookup
+    current = getattr(current, bit)
+  File "/usr/local/lib/python3.7/site-packages/django/utils/functional.py", line 225, in inner
+    return func(self._wrapped, *args)
+AttributeError: 'CustomUserModel' object has no attribute 'get_short_name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/site-packages/django/template/base.py", line 842, in _resolve_lookup
+    current = current[int(bit)]
+ValueError: invalid literal for int() with base 10: 'get_short_name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/site-packages/django/template/base.py", line 849, in _resolve_lookup
+    (bit, current))  # missing attribute
+django.template.base.VariableDoesNotExist: Failed lookup for key [get_short_name] in <SimpleLazyObject: <CustomUserModel: 9515871045>>
+Not Found: /favicon.ico
+Exception while resolving variable 'get_short_name' in template 'admin/index.html'.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/site-packages/django/template/base.py", line 828, in _resolve_lookup
+    current = current[bit]
+  File "/usr/local/lib/python3.7/site-packages/django/utils/functional.py", line 225, in inner
+    return func(self._wrapped, *args)
+TypeError: 'CustomUserModel' object is not subscriptable
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/site-packages/django/template/base.py", line 836, in _resolve_lookup
+    current = getattr(current, bit)
+  File "/usr/local/lib/python3.7/site-packages/django/utils/functional.py", line 225, in inner
+    return func(self._wrapped, *args)
+AttributeError: 'CustomUserModel' object has no attribute 'get_short_name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/site-packages/django/template/base.py", line 842, in _resolve_lookup
+    current = current[int(bit)]
+ValueError: invalid literal for int() with base 10: 'get_short_name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/site-packages/django/template/base.py", line 849, in _resolve_lookup
+    (bit, current))  # missing attribute
+django.template.base.VariableDoesNotExist: Failed lookup for key [get_short_name] in <SimpleLazyObject: <CustomUserModel: 9515871045>>
+Not Found: /favicon.ico
+Not Found: /store/cart/
+Not Found: /store/cart/
+Not Found: /store/cart/
+Not Found: /store/cart/
+Not Found: /store/cart/
+Not Found: /store/cart/
+Not Found: /store/cart/
+Not Found: /store/cart/
+Not Found: /store/cart/
