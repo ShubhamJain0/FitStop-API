@@ -9,13 +9,15 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
  
 import pyotp
 from twilio.rest import Client as TwilioClient
 from decouple import config
 
 from .serializers import UserSerializer, EditUserSerializer, GetUserSerializer
-from .models import CustomUserModel, InactiveUserId, ResetPassUserId
+from .models import CustomUserModel
 import api.signals
 
 # Create your views here.
@@ -49,7 +51,7 @@ class User(generics.RetrieveUpdateAPIView):
 
 		if self.request.method == 'GET':
 			return GetUserSerializer
-		elif self.request.method == 'PUT':
+		elif self.request.method == 'PATCH':
 			return EditUserSerializer
 
 		return self.serializer_class
@@ -62,15 +64,43 @@ class CreateUser(generics.CreateAPIView):
 
 
 
+
+class CustomAuthToken(ObtainAuthToken):
+
+    def post(self, request, *args, **kwargs):
+
+    	sms_code = request.data['password']
+    	code = int(sms_code)
+    	get_phone = request.data['username']
+    	user = CustomUserModel.objects.get(phone=get_phone)
+    	print(code)
+    	if user.authenticate(code):
+    		password = CustomUserModel.objects.make_random_password(length=20, allowed_chars="abcdefghjkmnpqrstuvwxyz01234567889ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+<>~-_,")
+    		user.is_active = True
+    		user.set_password(password)
+    		user.save()
+    		serializer = self.serializer_class(data={'username': get_phone, 'password': password},
+    			context={'request': request})
+    		serializer.is_valid(raise_exception=True)
+    		user = serializer.validated_data['user']
+    		token, created = Token.objects.get_or_create(user=user)
+    		return Response({'token': token.key})
+    	else:
+    		action = 'Not verified'
+    		return Response({'message': 'otp not verified'}, status=400)
+
+
+
 @api_view(['POST'])
 def send_sms_code(request, format=None):
 
 	if request.method == "POST":
 		try:
+			action = ''
 			num = request.data['phone']
 			user = CustomUserModel.objects.get(phone=num)
 			#Time based otp
-			time_otp = pyotp.TOTP(user.key, interval=300)
+			time_otp = pyotp.TOTP(user.key, interval=200)
 			time_otp = time_otp.now()
 			#Phone number must be international and start with a plus '+'  
 			user_phone_number = '+91' + user.phone
@@ -82,9 +112,32 @@ def send_sms_code(request, format=None):
 				to=user_phone_number
 			)
 
-			return Response({'message': 'otp sent'}, status=200)
+			action = 'Login'
+			return Response({'message': 'otp sent', 'action': action}, status=200)
+
 		except CustomUserModel.DoesNotExist:
-			return Response({'message': 'User with this number does not exist'}, status=401)
+			user = CustomUserModel.objects.create(phone=num)
+			password = CustomUserModel.objects.make_random_password(length=20, allowed_chars="abcdefghjkmnpqrstuvwxyz01234567889ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+<>~-_,")
+			user.set_password(password)
+			user.is_active = False
+			user.save()
+
+			#Time based otp
+			time_otp = pyotp.TOTP(user.key, interval=200)
+			time_otp = time_otp.now()
+			#Phone number must be international and start with a plus '+'  
+			user_phone_number = '+91' + user.phone
+			#use_phone_number = '{0:+}'.format(int(user_phone_number))
+			#print(use_phone_number)
+			client.messages.create(
+				body="Your verification code is "+time_otp,
+				from_=twilio_phone,
+				to=user_phone_number
+			)
+			print(time_otp)
+
+			action = 'create'
+			return Response({'message': 'otp sent', 'action': action}, status=200)
 
 
 
@@ -98,20 +151,21 @@ def verify_phone(request, sms_code, format=None):
 		get_phone = request.data['phone']
 		user = CustomUserModel.objects.get(phone=get_phone)
 
-		if user.authenticate(code):
+		if not user.authenticate(code):
 			user.is_active = True
+			user.set_password(code)
 			user.save()
 
-			return Response({'message': 'User Created'}, status=201)
+			return Response({'message': 'User Verified'}, status=201)
 
 		else:
 			user.is_active = False
 			user.save()
-			return Response(dict(detail='The provided code did not match or has expired'),status=404)
+			return Response(dict(detail='The provided code did not match or has expired'), status=400)
 
 	except:
 
-		return Response(dict(detail='Please enter a valid OTP'), status=406)
+		return Response(dict(detail='Invalid OTP'), status=404)
 
 
 

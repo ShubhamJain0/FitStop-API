@@ -16,31 +16,39 @@ Including another URLconf
 from django.urls import path, include
 from rest_framework import routers
 from store.views import (StoreItems, StoreItemsFruitsList, StoreItemsDriedFruitsList,StoreItemsExoticsList, AddressBook, CartView, PlaceOrder, 
-    CartReduceItemOrDeleteItem, PreviousOrderView, DeliveryAddressIdView, ConfirmOrder, RepeatOrder, RatingCreateView, 
-    RecipeView, HomeBannerView, getDeliveryAddress, CreatePushNotificationsToken, HomeProductsView, CouponView)
+    CartReduceItemOrDeleteItem, PreviousOrderView, DeliveryAddressIdView, ConfirmOrder, RepeatOrder, RatingCreateView, GetRatingItems,
+    createDelPackRating, RecipeView, RecipeDetailView, HomeBannerView, getDeliveryAddress, CreatePushNotificationsToken, HomeProductsView, CouponView, 
+    ActiveOrderView, buildCartForRecipe, FavRecipeView, NutritionalValuesView)
 
 router = routers.DefaultRouter()
 router.register('myaddress', AddressBook)
-router.register('recipes', RecipeView)
-router.register('storelist', StoreItems)
+router.register('recipedetail', RecipeDetailView)
 
 
 urlpatterns = [
 	path('', include(router.urls)),
+    path('storelist/', StoreItems.as_view()),
     path('fruitslist/', StoreItemsFruitsList.as_view()),
     path('dried-fruitslist/', StoreItemsDriedFruitsList.as_view()),
     path('exoticslist/', StoreItemsExoticsList.as_view()),
     path('cart/', CartView.as_view()),
     path('order/', PlaceOrder),
+    path('activeorders/',  ActiveOrderView),
     path('reduceordelete/', CartReduceItemOrDeleteItem),
-    path('previousorders/', PreviousOrderView.as_view()),
+    path('previousorders/', PreviousOrderView),
     path('deliveryaddress/', DeliveryAddressIdView.as_view()),
     path('getdeliveryaddress/', getDeliveryAddress),
     path('confirm/', ConfirmOrder),
     path('repeatorder/', RepeatOrder),
     path('createrating/', RatingCreateView),
+    path('getratingitems/', GetRatingItems),
+    path('delpackrate/', createDelPackRating),
     path('homebanner/', HomeBannerView.as_view()),
     path('homeproducts/', HomeProductsView.as_view()),
     path('pushnotificationtoken/', CreatePushNotificationsToken),
     path('coupons/', CouponView),
-] 
+    path('recipes/', RecipeView),
+    path('recipecart/', buildCartForRecipe),
+    path('favrecipes/', FavRecipeView),
+    path('nutritionalvalues/', NutritionalValuesView),
+]

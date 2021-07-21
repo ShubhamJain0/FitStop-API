@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 
-from .models import CustomUserModel, InactiveUserId
+from .models import CustomUserModel
 import pyotp
 from twilio.rest import Client as TwilioClient
 from decouple import config
@@ -20,19 +20,19 @@ class UserSerializer(serializers.ModelSerializer):
 	class Meta:
 
 		model = CustomUserModel
-		fields = ['phone', 'password']
-		extra_kwargs = {'password':{'write_only':True, 'required':True}}
+		fields = ['phone']
 
 
 	def create(self, validated_data):
 
 		user = CustomUserModel.objects.create(**validated_data)
-		user.set_password(validated_data['password'])
+		password = User.objects.make_random_password(length=14)
+		user.set_password(password)
 		user.is_active = False
 		user.save()
 
 		#Time based otp
-		time_otp = pyotp.TOTP(user.key, interval=300)
+		time_otp = pyotp.TOTP(user.key, interval=60)
 		time_otp = time_otp.now()
 		#Phone number must be international and start with a plus '+'   
 		user_phone_number = user.phone

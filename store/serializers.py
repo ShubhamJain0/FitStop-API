@@ -3,7 +3,8 @@ from django.contrib.auth import get_user_model
 from django.db.models import (Sum, Count)
 
 from api.models import (StoreItem, Address, Cart, PreviousOrder, DeliveryAddressId, Rating, Recipe, HomeBanner, 
-	ItemsData, DetailsImage, PushNotificationsToken, HomeProducts, Coupon)
+	DetailsImage, PushNotificationsToken, HomeProducts, Coupon, ActiveOrder, Order, VariableItem, PreviousOrderItems, 
+	RecipeIngredients, NutritionalValue, FavRecipe)
 
 User = get_user_model()
 
@@ -12,11 +13,38 @@ User = get_user_model()
 
 
 class StoreItemSerializer(serializers.ModelSerializer):
-
+	detail = serializers.SerializerMethodField(read_only=True)
+	nutritional_values = serializers.SerializerMethodField(read_only=True)
 	class Meta:
 
 		model = StoreItem
-		fields = ['id', 'name', 'description','price', 'image', 'no_of_ratings', 'avg_ratings', 'category', 'previous_price']
+		fields = ['id', 'name', 'description', 'availability', 'detail', 'nutritional_values', 'image', 'no_of_ratings', 'avg_ratings', 'category']
+
+	def get_detail(self, name):
+		return VariableItem.objects.filter(item=name).values('price', 'previous_price', 'quantity', 'item', 'id')
+
+	def get_nutritional_values(self, name):
+		return NutritionalValue.objects.filter(item=name).values('id', 'name', 'value')
+
+
+
+
+
+class VariableItemSerializer(serializers.ModelSerializer):
+	class Meta:
+
+		model = VariableItem
+		fields = '__all__'
+
+
+
+
+class NutritionalValueSerializer(serializers.ModelSerializer):
+	class Meta:
+
+		model = NutritionalValue
+		fields = '__all__'
+
 
 
 
@@ -62,7 +90,7 @@ class CartSerializer(serializers.ModelSerializer):
 	class Meta:
 
 		model = Cart
-		fields = ['id', 'ordereditem', 'price', 'item_count']
+		fields = ['id', 'ordereditem', 'price', 'item_count', 'weight']
 
 
 	def get_item_count(self, ordereditem):
@@ -71,21 +99,29 @@ class CartSerializer(serializers.ModelSerializer):
 
 
 
-class ItemsDataSerializer(serializers.ModelSerializer):
+class OrderSerializer(serializers.ModelSerializer):
 	class Meta:
 
-		model = ItemsData
-		fields = '__all__'
+		model = Order
+		fields = ['id', 'ordereditems', 'ordereddate', 'cart_total', 'coupon', 'delivery_charges', 'taxes', 'total_price', 
+					'payment_mode', 'ordered_address', 'ordered_locality', 'ordered_city']
 
 
 
 
 class PreviousOrderSerializer(serializers.ModelSerializer):
-	ordereditem = serializers.StringRelatedField(many=True)
 	class Meta:
 
 		model = PreviousOrder
-		fields = ['id', 'ordereditem', 'ordereddate', 'price']
+		fields = ['id', 'ordereddate', 'cart_total', 'coupon', 'delivery_charges', 'taxes', 'total_price', 'payment_mode',
+					'ordered_address', 'ordered_locality', 'ordered_city', 'delivery_and_package_rating', 'delivery_and_package_review']
+
+
+class PreviousOrderItemsSerializer(serializers.ModelSerializer):
+	class Meta:
+
+		model = PreviousOrderItems
+		fields = ['id', 'id_of_order', 'item_name', 'item_weight', 'item_price', 'item_count']
 
 
 
@@ -101,16 +137,39 @@ class RatingSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-	store_item = serializers.StringRelatedField()
 	user = serializers.StringRelatedField()
+	count = serializers.SerializerMethodField()
+	ingredient_count = serializers.SerializerMethodField()
 	class Meta:
 
 		model = Recipe
-		fields = ['name', 'ingredients', 'description', 'image', 'store_item', 'user']
+		fields = ['id', 'name', 'category', 'description', 'steps', 'image', 'user', 'name1', 'value1', 'name2', 'value2'
+					, 'name3', 'value3', 'name4', 'value4', 'name5', 'value5', 'count', 'servings', 'ingredient_count']
 
 	def create(self, validated_data):
 
 		return Recipe.objects.create(**validated_data)
+
+
+	def get_count(self, obj):
+		return FavRecipe.objects.filter(id_of_recipe=obj.id).count()
+
+	def get_ingredient_count(self, obj):
+		return RecipeIngredients.objects.filter(id_of_recipe=obj.id).count()
+
+class RecipeIngredientsSerializer(serializers.ModelSerializer):
+	class Meta:
+
+		model = RecipeIngredients
+		fields = '__all__'
+
+
+
+class FavRecipeSerializer(serializers.ModelSerializer):
+	class Meta:
+
+		model = FavRecipe
+		fields = '__all__'
 
 
 
@@ -140,3 +199,11 @@ class CouponSerializer(serializers.ModelSerializer):
 
 		model = Coupon
 		fields = ['id', 'name', 'description', 'discount', 'min_items_price']
+
+
+
+class ActiveOrderSerializer(serializers.ModelSerializer):
+	class Meta:
+
+		model = ActiveOrder
+		fields = ['id', 'order_number', 'order_status', 'push_token', 'user']

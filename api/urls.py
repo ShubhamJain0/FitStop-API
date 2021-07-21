@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.urls import path, include
 from rest_framework import routers
-from api.views import first, User, send_sms_code, verify_phone, CreateUser, reset_pass, reset_pass_verify, resetPass
+from api.views import first, User, send_sms_code, verify_phone, CreateUser, reset_pass, reset_pass_verify, resetPass, CustomAuthToken
 from rest_framework.authtoken.views import obtain_auth_token
 
 router = routers.DefaultRouter()
@@ -23,6 +23,7 @@ router = routers.DefaultRouter()
 
 urlpatterns = [
 	path('', include(router.urls)),
+    path('customauth/', CustomAuthToken.as_view()),
     path('auth/', obtain_auth_token),
 	path('first/', first),
 	path('me/', User.as_view()),
