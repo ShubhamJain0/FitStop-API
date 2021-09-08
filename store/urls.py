@@ -18,7 +18,7 @@ from rest_framework import routers
 from store.views import (StoreItems, StoreItemsFruitsList, StoreItemsDriedFruitsList,StoreItemsExoticsList, AddressBook, CartView, PlaceOrder, 
     CartReduceItemOrDeleteItem, PreviousOrderView, DeliveryAddressIdView, ConfirmOrder, RepeatOrder, RatingCreateView, GetRatingItems,
     createDelPackRating, RecipeView, RecipeDetailView, HomeBannerView, getDeliveryAddress, CreatePushNotificationsToken, HomeProductsView, CouponView, 
-    ActiveOrderView, buildCartForRecipe, FavRecipeView, NutritionalValuesView)
+    ActiveOrderView, buildCartForRecipe, FavRecipeView, NutritionalValuesView, CreatePaymentOrder, PlaceOrderCOD)
 
 router = routers.DefaultRouter()
 router.register('myaddress', AddressBook)
@@ -33,6 +33,7 @@ urlpatterns = [
     path('exoticslist/', StoreItemsExoticsList.as_view()),
     path('cart/', CartView.as_view()),
     path('order/', PlaceOrder),
+    path('orderCOD/', PlaceOrderCOD),
     path('activeorders/',  ActiveOrderView),
     path('reduceordelete/', CartReduceItemOrDeleteItem),
     path('previousorders/', PreviousOrderView),
@@ -51,4 +52,5 @@ urlpatterns = [
     path('recipecart/', buildCartForRecipe),
     path('favrecipes/', FavRecipeView),
     path('nutritionalvalues/', NutritionalValuesView),
+    path('createpaymentorder/', CreatePaymentOrder),
 ]

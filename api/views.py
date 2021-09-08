@@ -70,7 +70,7 @@ class CustomAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
 
     	sms_code = request.data['password']
-    	code = int(sms_code)
+    	code = sms_code
     	get_phone = request.data['username']
     	user = CustomUserModel.objects.get(phone=get_phone)
     	print(code)
@@ -134,7 +134,6 @@ def send_sms_code(request, format=None):
 				from_=twilio_phone,
 				to=user_phone_number
 			)
-			print(time_otp)
 
 			action = 'create'
 			return Response({'message': 'otp sent', 'action': action}, status=200)

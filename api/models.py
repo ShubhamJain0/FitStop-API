@@ -121,7 +121,7 @@ class CustomUserModel(AbstractBaseUser, PermissionsMixin):
 		"""This method authenticates the otp"""
 		provided_otp = 0
 		try:
-			provided_otp = int(otp)
+			provided_otp = otp
 		except:
 			return False
 
@@ -250,6 +250,9 @@ class Order(models.Model):
 	taxes = models.IntegerField(default=30)
 	total_price = models.IntegerField(null=True)
 	payment_mode = models.CharField(max_length=255, null=True)
+	payment_order_id = models.CharField(max_length=1000, null=True, blank=True)
+	transaction_id = models.CharField(max_length=1000, null=True, blank=True)
+	payment_authenticity = models.CharField(max_length=100, null=True, blank=True)
 	user = models.ForeignKey(
 		settings.AUTH_USER_MODEL,
 		on_delete=models.CASCADE,
@@ -272,6 +275,9 @@ class PreviousOrder(models.Model):
 	taxes = models.IntegerField(default=30)
 	total_price = models.IntegerField(null=True)
 	payment_mode = models.CharField(max_length=255, null=True)
+	payment_order_id = models.CharField(max_length=1000, null=True, blank=True)
+	transaction_id = models.CharField(max_length=1000, null=True, blank=True)
+	payment_authenticity = models.CharField(max_length=100, null=True, blank=True)
 	delivery_and_package_rating = models.IntegerField(null=True, validators=[MinValueValidator(1), MaxValueValidator(5)])
 	delivery_and_package_review = models.CharField(max_length=1000, null=True)
 	user = models.ForeignKey(

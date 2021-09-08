@@ -28,11 +28,15 @@ from exponent_server_sdk import (
 from requests.exceptions import ConnectionError, HTTPError
 
 import re
+import razorpay
+import hmac
+import hashlib
 
 # Create your views here.
 
 User = get_user_model()
-
+client = razorpay.Client(auth=("rzp_test_n9ilrJg1PZ5pJf", "HedvnujxDyOgGc7Pldttz8pT"))
+client.set_app_details({"title" : "FitStop", "version" : "1.0.0"})
 
 
 
@@ -332,6 +336,73 @@ def PlaceOrder(request):
 			payment_mode = request.data['payment']
 			get_pushtoken = request.data['pushToken']
 
+			"""Payment Related"""
+			payment_order_id = request.data['payment_order_id']
+			razorpay_payment_id = request.data['razorpay_payment_id']
+			razorpay_signature = request.data['razorpay_signature']
+			secret = b'HedvnujxDyOgGc7Pldttz8pT'
+
+			generated_signature = hmac.new(secret, (payment_order_id + "|" + razorpay_payment_id).encode('ASCII'), hashlib.sha256).hexdigest()
+			authenticity = ''
+
+			if (generated_signature == razorpay_signature):
+
+				authenticity = 'Success'
+
+				get_date = Cart.objects.filter(user=request.user).values_list('ordereddate', flat=True)
+				get_time = Cart.objects.filter(user=request.user).values_list('orderedtime', flat=True)
+
+				get_cart = Cart.objects.filter(user=request.user).distinct('ordereditem', 'weight')
+				ordereditems = []
+
+				for i in get_cart:
+					get_items = Cart.objects.filter(ordereditem=i.ordereditem, user=request.user, weight=i.weight).values('ordereditem', 'weight').annotate(count=Count('ordereditem'))
+					ordereditems.append((get_items[0]['ordereditem'] + ' w' + get_items[0]['weight'] + ' x' + str(get_items[0]['count']) + ', '))
+
+				qs = Order.objects.create(user=request.user, ordereditems=ordereditems, cart_total=cart_total, coupon=coupon, 
+					delivery_charges=delivery_charges, taxes=taxes, total_price=total_price, payment_mode=payment_mode, ordered_address=get_address.address, 
+					ordered_locality=get_address.locality, ordered_city=get_address.city, payment_order_id=payment_order_id, 
+					transaction_id=razorpay_payment_id, payment_authenticity=authenticity)
+				qs2 = PreviousOrder.objects.create(user=request.user, cart_total=cart_total, coupon=coupon, delivery_charges=delivery_charges, 
+					taxes=taxes, total_price=total_price, payment_mode=payment_mode, ordered_address=get_address.address, ordered_locality=get_address.locality, 
+					ordered_city=get_address.city, payment_order_id=payment_order_id, transaction_id=razorpay_payment_id, 
+					payment_authenticity=authenticity)
+
+				for i in get_cart:
+					data = Cart.objects.filter(ordereditem=i.ordereditem, weight=i.weight, price=i.price, user=request.user).values('ordereditem', 'weight', 'price').annotate(count=Count('ordereditem'))
+					PreviousOrderItems.objects.create(id_of_order=qs2, item_name=data[0]['ordereditem'], item_weight=data[0]['weight'], item_price=data[0]['price'], item_count=data[0]['count'], user=request.user)
+
+				ActiveOrder.objects.create(order_number=qs.id, user=request.user, push_token=get_pushtoken)
+				Cart.objects.filter(user=request.user).delete()
+
+				return Response({'message': 'Placed Succesfully', 'active_order_id': qs.id}, status=201)
+			else:
+				authenticity = 'Fail'
+				return Response({'message': 'Payment Authenticity failed'}, status=401)
+		else:
+			return Response({'message': 'Cart is empty'}, status=404)
+
+
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def PlaceOrderCOD(request):
+
+	if request.method == 'POST':
+
+		if Cart.objects.filter(user=request.user):
+
+			address = DeliveryAddressId.objects.filter(user=request.user).values('address_id')
+			get_address = Address.objects.get(user=request.user, id__in=address)
+			cart_total = request.data['cart_total']
+			coupon = request.data['coupon']
+			delivery_charges = request.data['delivery_charges']
+			taxes = request.data['taxes']
+			total_price = request.data['total_price']
+			payment_mode = request.data['payment']
+			get_pushtoken = request.data['pushToken']
+
 			get_date = Cart.objects.filter(user=request.user).values_list('ordereddate', flat=True)
 			get_time = Cart.objects.filter(user=request.user).values_list('orderedtime', flat=True)
 
@@ -356,9 +427,13 @@ def PlaceOrder(request):
 			ActiveOrder.objects.create(order_number=qs.id, user=request.user, push_token=get_pushtoken)
 			Cart.objects.filter(user=request.user).delete()
 
-			return Response({'message': 'Placed Succesfully'}, status=201)
+			return Response({'message': 'Placed Succesfully', 'active_order_id': qs.id}, status=201)
+
 		else:
-			return Response({'message': 'Cart is empty'}, status=400)
+			return Response({'message': 'Cart is empty'}, status=404)
+
+
+
 
 
 @api_view(['GET'])
@@ -483,9 +558,11 @@ def RepeatOrder(request):
 				unavailable = 'Not availabile'
 		else:
 			pass
+	qs = Cart.objects.filter(user=request.user).distinct('ordereditem')
+	serializer = CartSerializer(qs, many=True, context={'request': request})
 	if unavailable is not '':
-		raise NotFound('Some items are out of stock')
-	return Response({'message': 'Added to cart'}, status=200)
+		return Response({'cart': serializer.data}, status=404)
+	return Response({'message': 'Added to cart', 'cart': serializer.data}, status=200)
 
 
 
@@ -597,11 +674,12 @@ def buildCartForRecipe(request):
 		else:
 			pass
 
-	if unavailable is not '':
-		raise NotFound('Some items are out of stock')
-
 	qs = Cart.objects.filter(user=request.user).distinct('ordereditem')
 	serializer = CartSerializer(qs, many=True, context={'request': request})
+
+	if unavailable is not '':
+		return Response({'data': serializer.data}, status=404)
+
 	return Response({'data': serializer.data}, status=200)
 
 
@@ -715,3 +793,17 @@ def CreatePushNotificationsToken(request):
 				"""Creates a device token if it doesn't exists"""
 				PushNotificationsToken.objects.create(token=token)
 				return Response({'message': 'created'}, status=201)
+
+
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def CreatePaymentOrder(request):
+
+	order_amount = request.data['order_amount'] * 100
+	order_currency = 'INR'
+
+	resp = client.order.create(dict(amount=order_amount, currency=order_currency))
+
+	return Response({'resp': resp}, status=200)

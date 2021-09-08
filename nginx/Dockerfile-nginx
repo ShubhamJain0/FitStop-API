@@ -1,5 +1,38 @@
-FROM nginx:latest
+FROM nginx:1.20.1
+
+RUN apt-get update && \
+	apt-get install -y wget tar apt-utils autoconf automake build-essential git libcurl4-openssl-dev libgeoip-dev liblmdb-dev libpcre++-dev libtool libxml2 libxml2-dev libssl-dev libyajl-dev pkgconf zlib1g-dev && \
+	git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity && \
+	cd ModSecurity && \
+	git submodule init && \
+	git submodule update && \
+	./build.sh && \
+	./configure && \
+	make && \
+	make install && \
+	cd .. && \
+	git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git && \
+	wget http://nginx.org/download/nginx-1.20.1.tar.gz && \
+	tar zxvf nginx-1.20.1.tar.gz && \
+	cd nginx-1.20.1 && \
+	./configure --with-compat --add-dynamic-module=../ModSecurity-nginx && \
+	make modules && \
+	cp objs/ngx_http_modsecurity_module.so /etc/nginx/modules && \
+	cd .. && \
+	git clone https://github.com/SpiderLabs/owasp-modsecurity-crs.git /usr/src/owasp-modsecurity-crs && \
+	cp -R /usr/src/owasp-modsecurity-crs/ /etc/nginx/conf/ && \
+	apt-get remove -y --purge apt-utils autoconf automake build-essential git pkgconf && \
+	apt-get autoremove -y
+
+RUN mv /etc/nginx/conf/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf.example /etc/nginx/conf/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf && \
+	mv /etc/nginx/conf/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example /etc/nginx/conf/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
 
 RUN rm /etc/nginx/conf.d/default.conf
 
+COPY nginx/modsec_includes.conf /etc/nginx/conf/
+COPY nginx/modsecurity.conf /etc/nginx/conf/
+COPY nginx/crs-setup.conf /etc/nginx/conf/rules/
+COPY nginx/unicode.mapping /etc/nginx/conf/unicode.mapping
+
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
 COPY nginx/store-api.conf /etc/nginx/conf.d/
