@@ -107,7 +107,7 @@ def send_sms_code(request, format=None):
 			#use_phone_number = '{0:+}'.format(int(user_phone_number))
 			#print(use_phone_number)
 			client.messages.create(
-				body="Your verification code is "+time_otp,
+				body="Your verification code for FitStop is "+time_otp + '. ' + 'Code will expire in 30 seconds.',
 				from_=twilio_phone,
 				to=user_phone_number
 			)
