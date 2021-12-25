@@ -11,3 +11,4 @@ gunicorn
 daphne == 3.0.2
 channels == 3.0.3
 razorpay
+django-apscheduler

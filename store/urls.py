@@ -17,8 +17,11 @@ from django.urls import path, include
 from rest_framework import routers
 from store.views import (StoreItems, StoreItemsFruitsList, StoreItemsDriedFruitsList,StoreItemsExoticsList, AddressBook, CartView, PlaceOrder, 
     CartReduceItemOrDeleteItem, PreviousOrderView, DeliveryAddressIdView, ConfirmOrder, RepeatOrder, RatingCreateView, GetRatingItems,
-    createDelPackRating, RecipeView, RecipeDetailView, HomeBannerView, getDeliveryAddress, CreatePushNotificationsToken, HomeProductsView, CouponView, 
-    ActiveOrderView, buildCartForRecipe, FavRecipeView, NutritionalValuesView, CreatePaymentOrder, PlaceOrderCOD)
+    createDelPackRating, RecipeView, RecipeDetailView, HomeBannerView, getDeliveryAddress, CreatePushNotificationsToken, CouponView, 
+    ActiveOrderView, buildCartForRecipeIngredients, FavRecipeView, NutritionalValuesView, CreatePaymentOrder, PlaceOrderCOD, SubscriptionCartView,
+    SubscriptionCartReduceItemOrDeleteItem, ConfirmSubscription, StartSubscription, RecipeSubscriptionCartView, RecipeSubscriptionCartReduceOrDelete,
+    ConfirmRecipeSubscription, StartRecipeSubscription, MySubscriptionsView, RepeatSubscription, StoreItemsImmuntiyBoosterList,
+    StoreItemsOtherList)
 
 router = routers.DefaultRouter()
 router.register('myaddress', AddressBook)
@@ -31,6 +34,8 @@ urlpatterns = [
     path('fruitslist/', StoreItemsFruitsList.as_view()),
     path('dried-fruitslist/', StoreItemsDriedFruitsList.as_view()),
     path('exoticslist/', StoreItemsExoticsList.as_view()),
+    path('imblist/', StoreItemsImmuntiyBoosterList.as_view()),
+    path('otherlist/', StoreItemsOtherList.as_view()),
     path('cart/', CartView.as_view()),
     path('order/', PlaceOrder),
     path('orderCOD/', PlaceOrderCOD),
@@ -45,12 +50,21 @@ urlpatterns = [
     path('getratingitems/', GetRatingItems),
     path('delpackrate/', createDelPackRating),
     path('homebanner/', HomeBannerView.as_view()),
-    path('homeproducts/', HomeProductsView.as_view()),
     path('pushnotificationtoken/', CreatePushNotificationsToken),
     path('coupons/', CouponView),
     path('recipes/', RecipeView),
-    path('recipecart/', buildCartForRecipe),
+    path('recipecartingredients/', buildCartForRecipeIngredients),
     path('favrecipes/', FavRecipeView),
     path('nutritionalvalues/', NutritionalValuesView),
     path('createpaymentorder/', CreatePaymentOrder),
+    path('subscart/', SubscriptionCartView.as_view()),
+    path('subsreduceordelete/', SubscriptionCartReduceItemOrDeleteItem),
+    path('subsconfirm/', ConfirmSubscription),
+    path('subscribe/', StartSubscription),
+    path('recipesubscart/', RecipeSubscriptionCartView.as_view()),
+    path('recipesubsreduceordelete/', RecipeSubscriptionCartReduceOrDelete),
+    path('recipesubsconfirm/', ConfirmRecipeSubscription),
+    path('recipesubscribe/', StartRecipeSubscription),
+    path('mysubscriptions/', MySubscriptionsView),
+    path('repeatsubscription/', RepeatSubscription),
 ]

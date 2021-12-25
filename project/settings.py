@@ -27,7 +27,7 @@ SECRET_KEY = '+-9t-k@(_zfy7te^$xfd4)%!1rxi00#&c659jj4&7+elmvdsbe'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '192.168.0.156', '192.168.0.105']
+ALLOWED_HOSTS = ['127.0.0.1', '192.168.0.156', '192.168.0.104']
 
 
 # Application definition
@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'store',
+    'django_apscheduler',
 ]
 
 MIDDLEWARE = [

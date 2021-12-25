@@ -3,8 +3,9 @@ from django.contrib.auth import get_user_model
 from django.db.models import (Sum, Count)
 
 from api.models import (StoreItem, Address, Cart, PreviousOrder, DeliveryAddressId, Rating, Recipe, HomeBanner, 
-	DetailsImage, PushNotificationsToken, HomeProducts, Coupon, ActiveOrder, Order, VariableItem, PreviousOrderItems, 
-	RecipeIngredients, NutritionalValue, FavRecipe)
+	PushNotificationsToken, Coupon, ActiveOrder, Order, VariableItem, PreviousOrderItems, 
+	RecipeIngredients, NutritionalValue, FavRecipe, Subscription, SubscriptionItems, SubscriptionCart, RecipeSubscriptionCart,
+	SubscriptionRecipeItems)
 
 User = get_user_model()
 
@@ -47,14 +48,6 @@ class NutritionalValueSerializer(serializers.ModelSerializer):
 
 
 
-
-class DetailsImageSerializer(serializers.ModelSerializer):
-	class Meta:
-
-		model = DetailsImage
-		fields = ['id', 'image', 'item']
-
-
 class AddressBookSerializer(serializers.ModelSerializer):
 
 	class Meta:
@@ -95,6 +88,7 @@ class CartSerializer(serializers.ModelSerializer):
 
 	def get_item_count(self, ordereditem):
 		return Cart.objects.filter(ordereditem=ordereditem, user=self.context['request'].user).count()
+
 
 
 
@@ -143,7 +137,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 	class Meta:
 
 		model = Recipe
-		fields = ['id', 'name', 'category', 'description', 'steps', 'image', 'user', 'name1', 'value1', 'name2', 'value2'
+		fields = ['id', 'name', 'price', 'category', 'description', 'steps', 'image', 'user', 'name1', 'value1', 'name2', 'value2'
 					, 'name3', 'value3', 'name4', 'value4', 'name5', 'value5', 'count', 'servings', 'ingredient_count']
 
 	def create(self, validated_data):
@@ -180,12 +174,6 @@ class HomeBannerSerializer(serializers.ModelSerializer):
 		fields = ['id', 'image']
 
 
-class HomeProductsSerializer(serializers.ModelSerializer):
-	class Meta:
-
-		model = HomeProducts
-		fields = '__all__'
-
 
 class PushNotificationsTokenSerializer(serializers.ModelSerializer):
 	class Meta: 
@@ -207,3 +195,50 @@ class ActiveOrderSerializer(serializers.ModelSerializer):
 
 		model = ActiveOrder
 		fields = ['id', 'order_number', 'order_status', 'push_token', 'user']
+
+
+
+class SubscriptionCartSerializer(serializers.ModelSerializer):
+
+	item_count = serializers.SerializerMethodField(read_only=True)
+
+	class Meta:
+		model = SubscriptionCart
+		fields = ['id', 'ordereditem', 'price', 'item_count', 'weight']
+
+	def get_item_count(self, ordereditem):
+		return SubscriptionCart.objects.filter(ordereditem=ordereditem, user=self.context['request'].user).count()
+
+
+
+
+class RecipeSubscriptionCartSerializer(serializers.ModelSerializer):
+
+	item_count = serializers.SerializerMethodField(read_only=True)
+
+	class Meta:
+		model = RecipeSubscriptionCart
+		fields = ['id', 'recipe_name', 'price', 'category', 'item_count']
+
+	def get_item_count(self, recipe_name):
+		return RecipeSubscriptionCart.objects.filter(recipe_name=recipe_name, user=self.context['request'].user).count()
+
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Subscription
+		fields = '__all__'
+
+
+class SubscriptionItemsSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = SubscriptionItems
+		fields = '__all__'
+
+
+
+class SubscriptionRecipeItemsSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = SubscriptionRecipeItems
+		fields = '__all__'

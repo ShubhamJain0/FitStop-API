@@ -19,22 +19,18 @@ FOOD_CATEGORY = (
 	('Fruits', 'Fruits'),
 	('Dried-Fruits', 'Dried-Fruits'),
 	('Exotics', 'Exotics'),
-	('Other', 'Other'),
 	('Banner1', 'Banner1'),
 	('Banner2', 'Banner2'),
-	('Custom1', 'Custom1'),
-	('Custom2', 'Custom2'),
-	('Custom3', 'Custom3'),
-	('Custom4', 'Custom4'),
+	('Immuntiy-Booster', 'Immuntiy-Booster'),
+	('Other', 'Other'),
 
 	)
 
 
-ADDRESS_TYPE = (
+SUBSCRIPTION_STATUS = (
 
-	('Home', 'Home'),
-	('Work', 'Work'),
-	('Other', 'Other')
+	('Active', 'Active'),
+	('Expired', 'Expired'),
 
 	)
 
@@ -179,13 +175,6 @@ class NutritionalValue(models.Model):
 
 
 
-
-class DetailsImage(models.Model):
-	image = models.ImageField(null=True, upload_to='images/detailsimage/')
-	item = models.ForeignKey(StoreItem, on_delete=models.CASCADE)
-
-
-
 class Address(models.Model):
 
 	address = models.CharField(max_length=255, null=True)
@@ -218,6 +207,7 @@ class DeliveryAddressId(models.Model):
 class Cart(models.Model):
 
 	ordereditem = models.CharField(max_length=200)
+	item_type = models.CharField(max_length=255, null=True)
 	price = models.IntegerField()
 	weight = models.CharField(max_length=255, null=True)
 	ordereddate = models.DateField(default=now)
@@ -233,6 +223,40 @@ class Cart(models.Model):
 		return self.ordereditem
 
 
+
+class SubscriptionCart(models.Model):
+
+	ordereditem = models.CharField(max_length=200)
+	price = models.IntegerField()
+	weight = models.CharField(max_length=255, null=True)
+	ordereddate = models.DateField(default=now)
+	orderedtime = models.TimeField(default=now)
+	user = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.CASCADE,
+		)
+
+	def __str__(self):
+
+		return self.ordereditem
+
+
+
+class RecipeSubscriptionCart(models.Model):
+
+	recipe_name = models.CharField(max_length=255, null=True)
+	price = models.IntegerField()
+	category = models.CharField(max_length=255, null=True, choices=RECIPE_CATEGORY)
+	ordereddate = models.DateField(default=now)
+	orderedtime = models.TimeField(default=now)
+	user = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.CASCADE,
+		)
+
+	def __str__(self):
+
+		return self.recipe_name
 
 
 
@@ -306,6 +330,59 @@ class ActiveOrder(models.Model):
 	push_token = models.CharField(null=True, max_length=255, blank=True)
 
 
+
+
+class Subscription(models.Model):
+
+	user = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.CASCADE,
+		)
+	subscription_plan = models.CharField(null=True, max_length=255)
+	subscription_type = models.CharField(null=True, max_length=255)
+	startdate = models.DateField(default=now)
+	starttime = models.TimeField(default=now)
+	enddate = models.DateField(null=True)
+	subscription_status = models.CharField(default='Active', max_length=255, choices=SUBSCRIPTION_STATUS)
+	push_token = models.CharField(null=True, max_length=255, blank=True)
+	ordereditems = models.TextField(null=True)
+	cart_total = models.IntegerField(null=True)
+	coupon = models.IntegerField(default=0)
+	delivery_charges = models.IntegerField(default=25)
+	taxes = models.IntegerField(default=30)
+	total_subscription_price = models.IntegerField(null=True)
+	delivery_address = models.CharField(null=True, max_length=255)
+	delivery_locality = models.CharField(null=True,max_length=255)
+	delivery_city = models.CharField(max_length=255)
+	payment_mode = models.CharField(max_length=255, null=True)
+	payment_order_id = models.CharField(max_length=1000, null=True, blank=True)
+	transaction_id = models.CharField(max_length=1000, null=True, blank=True)
+	payment_authenticity = models.CharField(max_length=100, null=True, blank=True)
+
+
+
+class SubscriptionItems(models.Model):
+
+	id_of_subscription = models.ForeignKey(Subscription, on_delete=models.CASCADE)
+	item_name = models.CharField(max_length=255, null=True)
+	item_weight = models.CharField(max_length=255, null=True)
+	item_price = models.IntegerField()
+	item_count = models.IntegerField()
+	user = models.ForeignKey(CustomUserModel, on_delete=models.CASCADE)
+
+
+
+class SubscriptionRecipeItems(models.Model):
+
+	 id_of_subscription = models.ForeignKey(Subscription, on_delete=models.CASCADE)
+	 recipe_name = models.CharField(max_length=255, null=True)
+	 recipe_price = models.IntegerField()
+	 category = models.CharField(max_length=255, null=True)
+	 user = models.ForeignKey(CustomUserModel, on_delete=models.CASCADE)
+
+
+
+
 class Rating(models.Model):
 
 	stars = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
@@ -323,6 +400,7 @@ class Rating(models.Model):
 class Recipe(models.Model):
 
 	name = models.CharField(max_length=50, blank=True)
+	price = models.IntegerField(default=0)
 	category = models.CharField(max_length=255, null=True, choices=RECIPE_CATEGORY)
 	description = models.CharField(max_length=5000, blank=True)
 	steps = models.TextField(null=True)
@@ -367,16 +445,6 @@ class FavRecipe(models.Model):
 class HomeBanner(models.Model):
 
 	image = models.ImageField(upload_to='images/banner/')
-
-
-
-
-class HomeProducts(models.Model):
-
-	title = models.CharField(max_length=1000, null=True)
-	description = models.CharField(max_length=5000,  null=True)
-	image = models.ImageField(upload_to='images/home-products/')
-	category = models.CharField(null=True, max_length=255, choices=(('Custom1', 'Custom1'), ('Custom2', 'Custom2'), ('Custom3', 'Custom3'), ('Custom4', 'Custom4')))
 
 
 

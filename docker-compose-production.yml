@@ -10,7 +10,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-production
-    command: sh -c "gunicorn -w 4 project.wsgi -b 0.0.0.0:8000 & daphne -b 0.0.0.0 -p 8001 project.asgi:application"
+    command: sh -c "python manage.py task & gunicorn -w 4 project.wsgi -b 0.0.0.0:8000 & daphne -b 0.0.0.0 -p 8001 project.asgi:application"
     volumes:
       - .:/code
       - ./mediafiles:/mediafiles
